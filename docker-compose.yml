@@ -43,6 +43,17 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
 
+  redis:
+    image: redis:7-alpine
+    container_name: fraud-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   transaction-service:
     build:
       context: ./transaction-service
@@ -61,6 +72,30 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       KAFKA_TOPIC_TRANSACTIONS: transactions
       KAFKA_CONSUMER_GROUP: transaction-service-group
+
+  fraud-service:
+    build:
+      context: ./fraud-service
+    container_name: fraud-fraud-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/fraud_db
+      DB_USERNAME: fraud_user
+      DB_PASSWORD: fraud_password
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_TOPIC_TRANSACTIONS: transactions
+      KAFKA_TOPIC_FRAUD_DECISIONS: fraud-decisions
+      KAFKA_CONSUMER_GROUP: fraud-service-group
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
 
 volumes:
   postgres-data:

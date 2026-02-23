@@ -5,7 +5,7 @@ Monorepo for a production-style, event-driven fraud detection platform.
 ## Services
 
 - `transaction-service`: Week 1 implemented service for transaction ingestion, persistence, and Kafka event publication.
-- `fraud-service`: placeholder for rule-based fraud evaluation.
+- `fraud-service`: Week 2 implemented service for rule-based fraud evaluation, Redis velocity tracking, and decision publication.
 - `ml-service`: placeholder for machine learning scoring.
 
 ## Quick Start
@@ -44,4 +44,8 @@ Monorepo for a production-style, event-driven fraud detection platform.
 3. Health check:
    ```bash
    curl http://localhost:8080/actuator/health
+   ```
+4. Fraud service health check:
+   ```bash
+   curl http://localhost:8081/actuator/health
    ```

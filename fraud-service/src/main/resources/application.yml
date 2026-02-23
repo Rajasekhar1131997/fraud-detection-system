@@ -1,0 +1,71 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: fraud-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/fraud_db}
+    username: ${DB_USERNAME:fraud_user}
+    password: ${DB_PASSWORD:fraud_password}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring:
+          json:
+            add:
+              type:
+                headers: false
+    consumer:
+      group-id: ${app.kafka.consumer-group}
+      auto-offset-reset: earliest
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring:
+          deserializer:
+            key:
+              delegate:
+                class: org.apache.kafka.common.serialization.StringDeserializer
+            value:
+              delegate:
+                class: org.springframework.kafka.support.serializer.JsonDeserializer
+          json:
+            trusted:
+              packages: com.frauddetection.fraudservice.event
+            value:
+              default:
+                type: com.frauddetection.fraudservice.event.TransactionCreatedEvent
+            use:
+              type:
+                headers: false
+
+app:
+  kafka:
+    transactions-topic: ${KAFKA_TOPIC_TRANSACTIONS:transactions}
+    fraud-decisions-topic: ${KAFKA_TOPIC_FRAUD_DECISIONS:fraud-decisions}
+    consumer-group: ${KAFKA_CONSUMER_GROUP:fraud-service-group}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
