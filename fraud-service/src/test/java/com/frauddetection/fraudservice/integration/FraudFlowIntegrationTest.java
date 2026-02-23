@@ -70,6 +70,8 @@ class FraudFlowIntegrationTest {
         registry.add("app.kafka.transactions-topic", () -> "transactions");
         registry.add("app.kafka.fraud-decisions-topic", () -> "fraud-decisions");
         registry.add("app.kafka.consumer-group", () -> "fraud-service-it-group");
+        registry.add("app.ml.base-url", () -> "http://127.0.0.1:65530");
+        registry.add("app.ml.timeout-ms", () -> "100");
     }
 
     @Test

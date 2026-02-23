@@ -10,14 +10,14 @@ class RiskScoringServiceTest {
     private final RiskScoringService riskScoringService = new RiskScoringService();
 
     @Test
-    void returnsRuleScoreForWeekTwo() {
-        BigDecimal score = riskScoringService.calculate(0.63453, BigDecimal.ZERO);
-        assertThat(score).isEqualByComparingTo("0.6345");
+    void combinesRuleAndMlScoresWithWeekThreeWeights() {
+        BigDecimal score = riskScoringService.calculate(0.5000, new BigDecimal("0.9000"));
+        assertThat(score).isEqualByComparingTo("0.7400");
     }
 
     @Test
-    void clampsOutOfRangeScores() {
-        BigDecimal high = riskScoringService.calculate(10, BigDecimal.ZERO);
+    void clampsOutOfRangeScoresBeforeCombining() {
+        BigDecimal high = riskScoringService.calculate(10, new BigDecimal("5"));
         BigDecimal low = riskScoringService.calculate(-3, BigDecimal.ZERO);
 
         assertThat(high).isEqualByComparingTo("1.0000");

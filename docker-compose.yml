@@ -84,6 +84,8 @@ services:
         condition: service_started
       redis:
         condition: service_healthy
+      ml-service:
+        condition: service_started
     ports:
       - "8081:8081"
     environment:
@@ -96,6 +98,16 @@ services:
       KAFKA_CONSUMER_GROUP: fraud-service-group
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      ML_SERVICE_BASE_URL: http://ml-service:8000
+      ML_SERVICE_PREDICT_PATH: /predict
+      ML_SERVICE_TIMEOUT_MS: 700
+
+  ml-service:
+    build:
+      context: ./ml-service
+    container_name: fraud-ml-service
+    ports:
+      - "8000:8000"
 
 volumes:
   postgres-data:

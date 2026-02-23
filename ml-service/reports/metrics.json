@@ -1,0 +1,35 @@
+{
+  "generated_at_utc": "2026-02-23T22:25:43.455953+00:00",
+  "training_source": "credit_card_csv",
+  "dataset_path": "ml-service\\data\\creditcard.csv",
+  "target_column": "Class",
+  "samples": 284807,
+  "positive_class_ratio": 0.001727485630620034,
+  "metrics": {
+    "precision": 0.007293847504558654,
+    "recall": 0.8780487804878049,
+    "f1": 0.014467515070328198,
+    "roc_auc": 0.9009164999850732,
+    "pr_auc": 0.0911368948494946,
+    "operating_threshold": 0.9181581345784819,
+    "operating_metric_score": 0.20895522388059704,
+    "operating_precision": 0.2692307692307692,
+    "operating_recall": 0.17073170731707318,
+    "operating_f1": 0.208955223880597,
+    "operating_positive_predictions": 78.0
+  },
+  "threshold_optimization": {
+    "metric": "f1",
+    "recommended_threshold": 0.9181581345784819,
+    "metric_score": 0.20895522388059704,
+    "precision": 0.2692307692307692,
+    "recall": 0.17073170731707318,
+    "f1": 0.208955223880597,
+    "positive_predictions": 78,
+    "constraints": {
+      "min_precision": 0.0,
+      "min_recall": 0.0
+    }
+  },
+  "model_output_path": "ml-service\\models\\model.pkl"
+}

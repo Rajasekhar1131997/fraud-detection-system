@@ -59,12 +59,16 @@ app:
     transactions-topic: ${KAFKA_TOPIC_TRANSACTIONS:transactions}
     fraud-decisions-topic: ${KAFKA_TOPIC_FRAUD_DECISIONS:fraud-decisions}
     consumer-group: ${KAFKA_CONSUMER_GROUP:fraud-service-group}
+  ml:
+    base-url: ${ML_SERVICE_BASE_URL:http://localhost:8000}
+    predict-path: ${ML_SERVICE_PREDICT_PATH:/predict}
+    timeout-ms: ${ML_SERVICE_TIMEOUT_MS:700}
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       probes:
