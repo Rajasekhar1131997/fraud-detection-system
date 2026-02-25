@@ -37,6 +37,8 @@ public class FraudProcessingService {
     private final DecisionEngine decisionEngine;
     private final FraudDecisionMapper mapper;
     private final FraudDecisionEventPublisher eventPublisher;
+    private final DashboardStreamService dashboardStreamService;
+    private final MeterRegistry meterRegistry;
     private final Timer processingLatencyTimer;
 
     public FraudProcessingService(
@@ -49,6 +51,7 @@ public class FraudProcessingService {
             DecisionEngine decisionEngine,
             FraudDecisionMapper mapper,
             FraudDecisionEventPublisher eventPublisher,
+            DashboardStreamService dashboardStreamService,
             MeterRegistry meterRegistry
     ) {
         this.fraudDecisionRepository = fraudDecisionRepository;
@@ -60,6 +63,8 @@ public class FraudProcessingService {
         this.decisionEngine = decisionEngine;
         this.mapper = mapper;
         this.eventPublisher = eventPublisher;
+        this.dashboardStreamService = dashboardStreamService;
+        this.meterRegistry = meterRegistry;
         this.processingLatencyTimer = meterRegistry.timer(PROCESSING_LATENCY_METRIC);
     }
 
@@ -94,6 +99,8 @@ public class FraudProcessingService {
                 FraudDecision savedDecision = fraudDecisionRepository.save(decisionEntity);
                 FraudDecisionEvent decisionEvent = mapper.toEvent(savedDecision);
                 eventPublisher.publish(decisionEvent);
+                dashboardStreamService.publish(savedDecision);
+                meterRegistry.counter("fraud.decisions.total", "decision", decision.name()).increment();
 
                 log.info(
                         "fraud_decision_created transactionId={} userId={} decision={} riskScore={} ruleScore={} "

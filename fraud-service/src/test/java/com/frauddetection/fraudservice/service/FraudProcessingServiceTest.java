@@ -1,6 +1,8 @@
 package com.frauddetection.fraudservice.service;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -16,6 +18,7 @@ import com.frauddetection.fraudservice.mapper.FraudDecisionMapper;
 import com.frauddetection.fraudservice.model.DecisionType;
 import com.frauddetection.fraudservice.model.FraudDecision;
 import com.frauddetection.fraudservice.repository.FraudDecisionRepository;
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import java.math.BigDecimal;
@@ -62,16 +65,24 @@ class FraudProcessingServiceTest {
     private FraudDecisionEventPublisher eventPublisher;
 
     @Mock
+    private DashboardStreamService dashboardStreamService;
+
+    @Mock
     private MeterRegistry meterRegistry;
 
     @Mock
     private Timer processingTimer;
+
+    @Mock
+    private Counter decisionCounter;
 
     private FraudProcessingService fraudProcessingService;
 
     @BeforeEach
     void setUp() {
         when(meterRegistry.timer("fraud.processing.latency")).thenReturn(processingTimer);
+        lenient().when(meterRegistry.counter(eq("fraud.decisions.total"), any(String[].class)))
+                .thenReturn(decisionCounter);
         fraudProcessingService = new FraudProcessingService(
                 fraudDecisionRepository,
                 featureEngineeringService,
@@ -82,6 +93,7 @@ class FraudProcessingServiceTest {
                 decisionEngine,
                 mapper,
                 eventPublisher,
+                dashboardStreamService,
                 meterRegistry
         );
     }
@@ -111,6 +123,10 @@ class FraudProcessingServiceTest {
                 DecisionType.BLOCKED,
                 new BigDecimal("0.8200"),
                 new BigDecimal("0.9100"),
+                BigDecimal.valueOf(9999),
+                "USD",
+                "crypto-exchange-1",
+                "Moscow, RU",
                 Instant.now()
         );
 
@@ -122,6 +138,10 @@ class FraudProcessingServiceTest {
                 DecisionType.BLOCKED,
                 new BigDecimal("0.8200"),
                 new BigDecimal("0.9100"),
+                BigDecimal.valueOf(9999),
+                "USD",
+                "crypto-exchange-1",
+                "Moscow, RU",
                 savedDecision.getCreatedAt()
         );
 
@@ -144,6 +164,7 @@ class FraudProcessingServiceTest {
 
         verify(fraudDecisionRepository).save(savedDecision);
         verify(eventPublisher).publish(decisionEvent);
+        verify(dashboardStreamService).publish(savedDecision);
     }
 
     @Test
@@ -166,6 +187,7 @@ class FraudProcessingServiceTest {
         verify(mlInferenceClient, never()).predictScore(any(), any());
         verify(fraudDecisionRepository, never()).save(any());
         verify(eventPublisher, never()).publish(any());
+        verify(dashboardStreamService, never()).publish(any());
     }
 
     @Test
@@ -193,6 +215,10 @@ class FraudProcessingServiceTest {
                 DecisionType.REVIEW,
                 new BigDecimal("0.5500"),
                 new BigDecimal("0.5500"),
+                BigDecimal.valueOf(6800),
+                "USD",
+                "merchant-1",
+                "Austin, US",
                 Instant.now()
         );
 
@@ -218,6 +244,10 @@ class FraudProcessingServiceTest {
                         savedDecision.getDecision(),
                         savedDecision.getRuleScore(),
                         savedDecision.getMlScore(),
+                        savedDecision.getAmount(),
+                        savedDecision.getCurrency(),
+                        savedDecision.getMerchantId(),
+                        savedDecision.getLocation(),
                         savedDecision.getCreatedAt()
                 )
         );

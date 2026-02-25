@@ -25,6 +25,10 @@ public class FraudDecisionMapper {
         fraudDecision.setDecision(decision);
         fraudDecision.setRuleScore(scale(ruleScore));
         fraudDecision.setMlScore(scale(mlScore));
+        fraudDecision.setAmount(transaction.amount());
+        fraudDecision.setCurrency(transaction.currency());
+        fraudDecision.setMerchantId(transaction.merchantId());
+        fraudDecision.setLocation(transaction.location());
         return fraudDecision;
     }
 
@@ -37,6 +41,10 @@ public class FraudDecisionMapper {
                 decision.getDecision(),
                 decision.getRuleScore(),
                 decision.getMlScore(),
+                decision.getAmount(),
+                decision.getCurrency(),
+                decision.getMerchantId(),
+                decision.getLocation(),
                 decision.getCreatedAt()
         );
     }

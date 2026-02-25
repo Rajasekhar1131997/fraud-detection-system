@@ -38,6 +38,18 @@ public class FraudDecision {
     @Column(nullable = false, precision = 5, scale = 4)
     private BigDecimal mlScore;
 
+    @Column(precision = 19, scale = 2)
+    private BigDecimal amount;
+
+    @Column(length = 3)
+    private String currency;
+
+    @Column(length = 100)
+    private String merchantId;
+
+    @Column(length = 150)
+    private String location;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -52,6 +64,10 @@ public class FraudDecision {
             DecisionType decision,
             BigDecimal ruleScore,
             BigDecimal mlScore,
+            BigDecimal amount,
+            String currency,
+            String merchantId,
+            String location,
             Instant createdAt
     ) {
         this.id = id;
@@ -61,6 +77,10 @@ public class FraudDecision {
         this.decision = decision;
         this.ruleScore = ruleScore;
         this.mlScore = mlScore;
+        this.amount = amount;
+        this.currency = currency;
+        this.merchantId = merchantId;
+        this.location = location;
         this.createdAt = createdAt;
     }
 
@@ -118,6 +138,38 @@ public class FraudDecision {
 
     public void setMlScore(BigDecimal mlScore) {
         this.mlScore = mlScore;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
+    public String getMerchantId() {
+        return merchantId;
+    }
+
+    public void setMerchantId(String merchantId) {
+        this.merchantId = merchantId;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 
     public Instant getCreatedAt() {
