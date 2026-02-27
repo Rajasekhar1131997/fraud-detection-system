@@ -35,6 +35,7 @@ public class FraudProcessingService {
     private final RuleEngine ruleEngine;
     private final RiskAggregationService riskAggregationService;
     private final DecisionEngine decisionEngine;
+    private final ModelQualityMonitoringService modelQualityMonitoringService;
     private final FraudDecisionMapper mapper;
     private final FraudDecisionEventPublisher eventPublisher;
     private final DashboardStreamService dashboardStreamService;
@@ -49,6 +50,7 @@ public class FraudProcessingService {
             RuleEngine ruleEngine,
             RiskAggregationService riskAggregationService,
             DecisionEngine decisionEngine,
+            ModelQualityMonitoringService modelQualityMonitoringService,
             FraudDecisionMapper mapper,
             FraudDecisionEventPublisher eventPublisher,
             DashboardStreamService dashboardStreamService,
@@ -61,6 +63,7 @@ public class FraudProcessingService {
         this.ruleEngine = ruleEngine;
         this.riskAggregationService = riskAggregationService;
         this.decisionEngine = decisionEngine;
+        this.modelQualityMonitoringService = modelQualityMonitoringService;
         this.mapper = mapper;
         this.eventPublisher = eventPublisher;
         this.dashboardStreamService = dashboardStreamService;
@@ -83,6 +86,7 @@ public class FraudProcessingService {
 
             MlPredictionRequest mlPredictionRequest = mlFeatureEngineeringService.buildRequest(transactionEvent, featureContext);
             BigDecimal mlScore = resolveMlScore(mlPredictionRequest, ruleScore);
+            modelQualityMonitoringService.recordMlScore(mlScore);
 
             BigDecimal riskScore = riskAggregationService.aggregate(ruleScore, mlScore);
             DecisionType decision = decisionEngine.decide(riskScore);

@@ -59,6 +59,9 @@ class FraudProcessingServiceTest {
     private DecisionEngine decisionEngine;
 
     @Mock
+    private ModelQualityMonitoringService modelQualityMonitoringService;
+
+    @Mock
     private FraudDecisionMapper mapper;
 
     @Mock
@@ -91,6 +94,7 @@ class FraudProcessingServiceTest {
                 ruleEngine,
                 riskAggregationService,
                 decisionEngine,
+                modelQualityMonitoringService,
                 mapper,
                 eventPublisher,
                 dashboardStreamService,
@@ -165,6 +169,7 @@ class FraudProcessingServiceTest {
         verify(fraudDecisionRepository).save(savedDecision);
         verify(eventPublisher).publish(decisionEvent);
         verify(dashboardStreamService).publish(savedDecision);
+        verify(modelQualityMonitoringService).recordMlScore(new BigDecimal("0.9100"));
     }
 
     @Test
@@ -185,6 +190,7 @@ class FraudProcessingServiceTest {
         verify(featureEngineeringService, never()).buildFeatureContext(any());
         verify(mlFeatureEngineeringService, never()).buildRequest(any(), any());
         verify(mlInferenceClient, never()).predictScore(any(), any());
+        verify(modelQualityMonitoringService, never()).recordMlScore(any());
         verify(fraudDecisionRepository, never()).save(any());
         verify(eventPublisher, never()).publish(any());
         verify(dashboardStreamService, never()).publish(any());
@@ -255,6 +261,7 @@ class FraudProcessingServiceTest {
         fraudProcessingService.processAndPublish(transaction);
 
         verify(riskAggregationService).aggregate(new BigDecimal("0.5500"), new BigDecimal("0.5500"));
+        verify(modelQualityMonitoringService).recordMlScore(new BigDecimal("0.5500"));
         verify(fraudDecisionRepository).save(savedDecision);
     }
 }

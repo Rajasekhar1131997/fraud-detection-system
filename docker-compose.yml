@@ -133,6 +133,7 @@ services:
       - "--storage.tsdb.path=/prometheus"
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts:/etc/prometheus/alerts:ro
     ports:
       - "9090:9090"
     depends_on:

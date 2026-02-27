@@ -1,0 +1,77 @@
+groups:
+  - name: fraud-platform-alerts
+    rules:
+      - alert: FraudServiceDown
+        expr: up{job="fraud-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: fraud-service
+        annotations:
+          summary: Fraud service is down
+          description: Prometheus cannot scrape fraud-service for more than 1 minute.
+
+      - alert: TransactionServiceDown
+        expr: up{job="transaction-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: transaction-service
+        annotations:
+          summary: Transaction service is down
+          description: Prometheus cannot scrape transaction-service for more than 1 minute.
+
+      - alert: FraudProcessingLatencyP95High
+        expr: histogram_quantile(0.95, sum(rate(fraud_processing_latency_seconds_bucket[5m])) by (le)) > 0.350
+        for: 10m
+        labels:
+          severity: warning
+          service: fraud-service
+        annotations:
+          summary: Fraud processing latency p95 is elevated
+          description: p95 fraud processing latency has stayed above 350ms for 10 minutes.
+
+      - alert: MlInferenceLatencyP99High
+        expr: histogram_quantile(0.99, sum(rate(fraud_ml_inference_latency_seconds_bucket[5m])) by (le)) > 0.400
+        for: 10m
+        labels:
+          severity: warning
+          service: fraud-service
+        annotations:
+          summary: ML inference latency p99 is elevated
+          description: p99 ML inference latency has stayed above 400ms for 10 minutes.
+
+      - alert: FraudBlockRateSpike
+        expr: |
+          (
+            sum(rate(fraud_decisions_total{decision="BLOCKED"}[5m]))
+            /
+            clamp_min(sum(rate(fraud_decisions_total[5m])), 0.001)
+          ) > 0.45
+        for: 10m
+        labels:
+          severity: warning
+          service: fraud-service
+        annotations:
+          summary: Blocked decision ratio spike
+          description: Blocked decision rate exceeded 45% for 10 minutes.
+
+      - alert: MlScoreDriftDetected
+        expr: fraud_ml_score_drift > 0.12
+        for: 15m
+        labels:
+          severity: warning
+          service: fraud-service
+        annotations:
+          summary: ML score drift detected
+          description: ML score drift remained above threshold for 15 minutes.
+
+      - alert: MlLowConfidenceRatioHigh
+        expr: fraud_ml_low_confidence_ratio > 0.55
+        for: 10m
+        labels:
+          severity: warning
+          service: fraud-service
+        annotations:
+          summary: ML low-confidence ratio high
+          description: More than 55% of recent ML scores are in the low-confidence band.

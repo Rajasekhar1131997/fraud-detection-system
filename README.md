@@ -31,6 +31,15 @@ Production-style monorepo for a real-time, event-driven fraud detection platform
 - Kubernetes baseline manifests under `k8s/`
 - Production CI/CD workflow under `.github/workflows/week5-production-cicd.yml`
 
+## Week 6 Foundations Implemented
+
+- Offline model optimization and retraining pipeline under `ml-training/`
+- Versioned local model registry with activation and rollback support
+- Model comparison reports and threshold analysis outputs in `ml-training/runs/`
+- Fraud-service ML confidence/drift monitoring metrics
+- Prometheus alert rules under `monitoring/alerts/`
+- Baseline chaos and cost snapshot scripts under `chaos-tests/` and `cost-analysis/`
+
 ## Quick Start
 
 ```bash
@@ -110,4 +119,40 @@ Set custom target URL:
 
 ```bash
 BASE_URL=http://localhost:8080 k6 run load-tests/transactions-load-test.js
+```
+
+Capacity profile (millions/day):
+
+```bash
+PROFILE=capacity_5m_day BASE_URL=http://localhost:8080 k6 run load-tests/transactions-capacity-test.js
+```
+
+Run full capacity suite (PowerShell):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File load-tests/run-capacity-profiles.ps1
+```
+
+Detailed plan and SLO criteria:
+
+- `load-tests/CAPACITY_TEST_PLAN.md`
+
+## Week 6 Commands
+
+Train + register new model:
+
+```bash
+python ml-training/training_pipeline.py --dataset ml-service/data/creditcard.csv
+```
+
+List model versions:
+
+```bash
+python ml-training/model_registry/registry.py --registry-dir ml-training/model_registry list
+```
+
+Rollback active model:
+
+```bash
+python ml-training/model_registry/registry.py --registry-dir ml-training/model_registry rollback --steps 1
 ```

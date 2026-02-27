@@ -88,6 +88,14 @@ app:
       enabled: ${APP_SECURITY_RATE_LIMIT_ENABLED:true}
       max-requests: ${APP_SECURITY_RATE_LIMIT_MAX_REQUESTS:120}
       window-seconds: ${APP_SECURITY_RATE_LIMIT_WINDOW_SECONDS:60}
+  monitoring:
+    ml:
+      baseline-window-size: ${APP_MONITORING_ML_BASELINE_WINDOW_SIZE:200}
+      recent-window-size: ${APP_MONITORING_ML_RECENT_WINDOW_SIZE:400}
+      low-confidence-min: ${APP_MONITORING_ML_LOW_CONFIDENCE_MIN:0.40}
+      low-confidence-max: ${APP_MONITORING_ML_LOW_CONFIDENCE_MAX:0.60}
+      drift-alert-threshold: ${APP_MONITORING_ML_DRIFT_ALERT_THRESHOLD:0.12}
+      low-confidence-alert-threshold: ${APP_MONITORING_ML_LOW_CONFIDENCE_ALERT_THRESHOLD:0.45}
 
 management:
   endpoints:
@@ -101,6 +109,10 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        fraud.processing.latency: true
+        fraud.ml.inference.latency: true
 
 resilience4j:
   circuitbreaker:

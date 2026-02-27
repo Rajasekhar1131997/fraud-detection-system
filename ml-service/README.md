@@ -64,6 +64,26 @@ Generated evaluation outputs:
 
 If `models/model.pkl` is missing, the service tries to train from `ML_DATASET_PATH` (default `ml-service/data/creditcard.csv`), then falls back to baseline synthetic data if the dataset is unavailable.
 
+## Week 6 Training Pipeline
+
+The Week 6 optimizer compares multiple models, tunes threshold selection, and writes versioned artifacts into a local model registry:
+
+```bash
+python ml-training/training_pipeline.py \
+  --dataset ml-service/data/creditcard.csv \
+  --threshold-metric f1 \
+  --min-precision 0.05 \
+  --min-recall 0.60
+```
+
+Registry operations:
+
+```bash
+python ml-training/model_registry/registry.py --registry-dir ml-training/model_registry list
+python ml-training/model_registry/registry.py --registry-dir ml-training/model_registry activate --version v2
+python ml-training/model_registry/registry.py --registry-dir ml-training/model_registry rollback --steps 1
+```
+
 ## Tests
 
 ```bash

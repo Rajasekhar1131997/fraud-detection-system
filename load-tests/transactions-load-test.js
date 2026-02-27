@@ -1,7 +1,9 @@
 import http from "k6/http";
-import { check, sleep } from "k6";
+import { check, fail, sleep } from "k6";
 
 const baseUrl = __ENV.BASE_URL || "http://localhost:8080";
+const authUsername = __ENV.AUTH_USERNAME || "analyst";
+const authPassword = __ENV.AUTH_PASSWORD || "analyst-change-me";
 
 export const options = {
   scenarios: {
@@ -48,7 +50,35 @@ function randomAmount() {
   return (10 + Math.random() * 1200).toFixed(2);
 }
 
-export default function () {
+export function setup() {
+  const response = http.post(
+    `${baseUrl}/api/v1/auth/token`,
+    JSON.stringify({
+      username: authUsername,
+      password: authPassword
+    }),
+    {
+      headers: {
+        "Content-Type": "application/json"
+      }
+    }
+  );
+
+  const ok = check(response, {
+    "auth status is 200": (result) => result.status === 200
+  });
+
+  if (!ok) {
+    fail(`Unable to authenticate for load test at ${baseUrl}/api/v1/auth/token`);
+  }
+
+  const payload = response.json();
+  return {
+    accessToken: payload.accessToken
+  };
+}
+
+export default function (setupData) {
   const payload = JSON.stringify({
     transactionId: randomId("txn"),
     userId: randomId("user"),
@@ -61,7 +91,8 @@ export default function () {
 
   const response = http.post(`${baseUrl}/api/v1/transactions`, payload, {
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${setupData.accessToken}`
     }
   });
 

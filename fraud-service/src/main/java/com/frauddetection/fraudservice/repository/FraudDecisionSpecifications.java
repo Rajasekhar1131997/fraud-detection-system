@@ -16,7 +16,8 @@ public final class FraudDecisionSpecifications {
             if (userId == null || userId.isBlank()) {
                 return criteriaBuilder.conjunction();
             }
-            return criteriaBuilder.equal(root.get("userId"), userId.trim());
+            String normalizedUserId = "%" + userId.trim().toLowerCase() + "%";
+            return criteriaBuilder.like(criteriaBuilder.lower(root.get("userId")), normalizedUserId);
         };
     }
 

@@ -105,9 +105,10 @@ export const fetchDecisions = async (
   page: number,
   size: number
 ): Promise<DashboardDecisionPageResponse> => {
+  const normalizedUserId = filters.userId.trim();
   const response = await api.get<DashboardDecisionPageResponse>("/api/v1/dashboard/decisions", {
     params: {
-      userId: filters.userId || undefined,
+      userId: normalizedUserId || undefined,
       decision: filters.decision || undefined,
       minAmount: toNumberOrUndefined(filters.minAmount),
       maxAmount: toNumberOrUndefined(filters.maxAmount),

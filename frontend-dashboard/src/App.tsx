@@ -14,22 +14,14 @@ import {
 const PAGE_SIZE = 20;
 const METRICS_REFRESH_INTERVAL_MS = 15_000;
 
-const toLocalDateTimeInput = (date: Date): string => {
-  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-  return localDate.toISOString().slice(0, 16);
-};
-
 const buildInitialFilters = (): DashboardFilters => {
-  const now = new Date();
-  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1_000);
-
   return {
     userId: "",
     decision: "",
     minAmount: "",
     maxAmount: "",
-    from: toLocalDateTimeInput(oneHourAgo),
-    to: toLocalDateTimeInput(now)
+    from: "",
+    to: ""
   };
 };
 
@@ -41,7 +33,10 @@ const isAfter = (left: string, right: string): boolean => {
 };
 
 const decisionMatchesFilters = (decision: DashboardDecision, filters: DashboardFilters): boolean => {
-  if (filters.userId && decision.userId !== filters.userId) {
+  if (
+    filters.userId &&
+    !decision.userId.toLowerCase().includes(filters.userId.trim().toLowerCase())
+  ) {
     return false;
   }
 

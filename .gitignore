@@ -9,3 +9,16 @@
 # OS
 .DS_Store
 Thumbs.db
+
+# Week 6 generated artifacts
+ml-training/runs/
+ml-training/model_registry/active/
+ml-training/model_registry/versions/
+ml-training/model_registry/registry.json
+chaos-tests/results/
+cost-analysis/reports/
+load-tests/reports/
+
+# Python
+**/__pycache__/
+*.pyc

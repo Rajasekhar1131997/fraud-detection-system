@@ -32,7 +32,7 @@ export const FilterBar = ({ filters, onChange, onApply, onReset }: FilterBarProp
           User ID
           <input
             type="text"
-            placeholder="user-123"
+            placeholder="user-1 (partial match)"
             value={filters.userId}
             onChange={(event) => updateFilter("userId", event.target.value)}
           />
