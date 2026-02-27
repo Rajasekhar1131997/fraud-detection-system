@@ -26,6 +26,8 @@ class MlInferenceClientTest {
 
     private HttpServer httpServer;
     private AtomicInteger statusCode;
+    private AtomicInteger failFirstRequests;
+    private AtomicInteger requestCount;
     private AtomicReference<String> responseBody;
     private AtomicLong responseDelayMillis;
     private AtomicReference<String> requestBody;
@@ -34,6 +36,8 @@ class MlInferenceClientTest {
     @BeforeEach
     void setUp() throws IOException {
         statusCode = new AtomicInteger(200);
+        failFirstRequests = new AtomicInteger(0);
+        requestCount = new AtomicInteger(0);
         responseBody = new AtomicReference<>("{\"fraud_probability\":0.8300}");
         responseDelayMillis = new AtomicLong(0);
         requestBody = new AtomicReference<>("");
@@ -41,7 +45,7 @@ class MlInferenceClientTest {
         httpServer = HttpServer.create(new InetSocketAddress(0), 0);
         httpServer.createContext(
                 "/predict",
-                new PredictionHandler(statusCode, responseBody, responseDelayMillis, requestBody)
+                new PredictionHandler(statusCode, failFirstRequests, requestCount, responseBody, responseDelayMillis, requestBody)
         );
         httpServer.start();
 
@@ -101,6 +105,26 @@ class MlInferenceClientTest {
     }
 
     @Test
+    void retriesAndReturnsMlScoreWhenServiceRecoversWithinRetryBudget()
+            throws ExecutionException, InterruptedException, TimeoutException {
+        failFirstRequests.set(2);
+
+        BigDecimal score = mlInferenceClient.predictScore(
+                        new MlPredictionRequest(
+                                new BigDecimal("9000.0000"),
+                                6,
+                                new BigDecimal("0.7000"),
+                                new BigDecimal("0.8000")
+                        ),
+                        new BigDecimal("0.4500")
+                )
+                .get(3, TimeUnit.SECONDS);
+
+        assertThat(score).isEqualByComparingTo("0.8300");
+        assertThat(requestCount.get()).isGreaterThanOrEqualTo(3);
+    }
+
+    @Test
     void fallsBackToProvidedScoreWhenCallTimesOut()
             throws ExecutionException, InterruptedException, TimeoutException {
         responseDelayMillis.set(450);
@@ -122,17 +146,23 @@ class MlInferenceClientTest {
     private static final class PredictionHandler implements HttpHandler {
 
         private final AtomicInteger statusCode;
+        private final AtomicInteger failFirstRequests;
+        private final AtomicInteger requestCount;
         private final AtomicReference<String> responseBody;
         private final AtomicLong responseDelayMillis;
         private final AtomicReference<String> requestBody;
 
         private PredictionHandler(
                 AtomicInteger statusCode,
+                AtomicInteger failFirstRequests,
+                AtomicInteger requestCount,
                 AtomicReference<String> responseBody,
                 AtomicLong responseDelayMillis,
                 AtomicReference<String> requestBody
         ) {
             this.statusCode = statusCode;
+            this.failFirstRequests = failFirstRequests;
+            this.requestCount = requestCount;
             this.responseBody = responseBody;
             this.responseDelayMillis = responseDelayMillis;
             this.requestBody = requestBody;
@@ -140,6 +170,7 @@ class MlInferenceClientTest {
 
         @Override
         public void handle(HttpExchange exchange) throws IOException {
+            int currentRequest = requestCount.incrementAndGet();
             requestBody.set(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
 
             long delayMillis = responseDelayMillis.get();
@@ -151,9 +182,14 @@ class MlInferenceClientTest {
                 }
             }
 
+            int effectiveStatusCode = statusCode.get();
+            if (currentRequest <= failFirstRequests.get()) {
+                effectiveStatusCode = 503;
+            }
+
             byte[] bytes = responseBody.get().getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().add("Content-Type", "application/json");
-            exchange.sendResponseHeaders(statusCode.get(), bytes.length);
+            exchange.sendResponseHeaders(effectiveStatusCode, bytes.length);
 
             try (OutputStream outputStream = exchange.getResponseBody()) {
                 outputStream.write(bytes);

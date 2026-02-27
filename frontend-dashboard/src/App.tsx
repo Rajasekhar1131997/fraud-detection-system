@@ -134,55 +134,73 @@ function App() {
   }, [loadMetrics]);
 
   useEffect(() => {
-    const eventSource = new EventSource(getStreamUrl());
+    let eventSource: EventSource | null = null;
+    let isDisposed = false;
+    setStreamState("connecting");
 
-    eventSource.addEventListener("connected", () => {
-      setStreamState("connected");
-    });
-
-    eventSource.addEventListener("decision", (event: MessageEvent) => {
+    const connectStream = async () => {
       try {
-        const nextDecision = JSON.parse(event.data) as DashboardDecision;
-        if (page !== 0 || !decisionMatchesFilters(nextDecision, appliedFilters)) {
+        const streamUrl = await getStreamUrl();
+        if (isDisposed) {
           return;
         }
 
-        setDecisionPage((previousPage) => {
-          if (!previousPage) {
-            return previousPage;
-          }
+        eventSource = new EventSource(streamUrl);
 
-          const withoutDuplicate = previousPage.content.filter(
-            (existingDecision) =>
-              !(
-                existingDecision.transactionId === nextDecision.transactionId &&
-                existingDecision.createdAt === nextDecision.createdAt
-              )
-          );
-
-          const updatedContent = [nextDecision, ...withoutDuplicate]
-            .sort(sortByCreatedAtDesc)
-            .slice(0, previousPage.size);
-
-          return {
-            ...previousPage,
-            content: updatedContent,
-            totalElements: previousPage.totalElements + 1
-          };
+        eventSource.addEventListener("connected", () => {
+          setStreamState("connected");
         });
 
-        void loadMetrics();
+        eventSource.addEventListener("decision", (event: MessageEvent) => {
+          try {
+            const nextDecision = JSON.parse(event.data) as DashboardDecision;
+            if (page !== 0 || !decisionMatchesFilters(nextDecision, appliedFilters)) {
+              return;
+            }
+
+            setDecisionPage((previousPage) => {
+              if (!previousPage) {
+                return previousPage;
+              }
+
+              const withoutDuplicate = previousPage.content.filter(
+                (existingDecision) =>
+                  !(
+                    existingDecision.transactionId === nextDecision.transactionId &&
+                    existingDecision.createdAt === nextDecision.createdAt
+                  )
+              );
+
+              const updatedContent = [nextDecision, ...withoutDuplicate]
+                .sort(sortByCreatedAtDesc)
+                .slice(0, previousPage.size);
+
+              return {
+                ...previousPage,
+                content: updatedContent,
+                totalElements: previousPage.totalElements + 1
+              };
+            });
+
+            void loadMetrics();
+          } catch (error) {
+            setStreamState("disconnected");
+          }
+        });
+
+        eventSource.onerror = () => {
+          setStreamState("disconnected");
+        };
       } catch (error) {
         setStreamState("disconnected");
       }
-    });
-
-    eventSource.onerror = () => {
-      setStreamState("disconnected");
     };
 
+    void connectStream();
+
     return () => {
-      eventSource.close();
+      isDisposed = true;
+      eventSource?.close();
     };
   }, [appliedFilters, loadMetrics, page]);
 

@@ -88,6 +88,7 @@ class TransactionFlowIntegrationTest {
 
         try {
             mockMvc.perform(post("/api/v1/transactions")
+                            .header("Authorization", "Bearer " + issueToken("analyst", "analyst-change-me"))
                             .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isCreated());
@@ -119,5 +120,22 @@ class TransactionFlowIntegrationTest {
         properties.put(JsonDeserializer.VALUE_DEFAULT_TYPE, TransactionCreatedEvent.class.getName());
         properties.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
         return new KafkaConsumer<>(properties);
+    }
+
+    private String issueToken(String username, String password) throws Exception {
+        String responseBody = mockMvc.perform(post("/api/v1/auth/token")
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "username": "%s",
+                                  "password": "%s"
+                                }
+                                """.formatted(username, password)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        return objectMapper.readTree(responseBody).get("accessToken").asText();
     }
 }

@@ -72,6 +72,9 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       KAFKA_TOPIC_TRANSACTIONS: transactions
       KAFKA_CONSUMER_GROUP: transaction-service-group
+      APP_SECURITY_JWT_SECRET: dev-only-change-this-jwt-secret-to-a-long-random-value-32chars
+      APP_SECURITY_ADMIN_PASSWORD: admin-change-me
+      APP_SECURITY_ANALYST_PASSWORD: analyst-change-me
 
   fraud-service:
     build:
@@ -101,6 +104,9 @@ services:
       ML_SERVICE_BASE_URL: http://ml-service:8000
       ML_SERVICE_PREDICT_PATH: /predict
       ML_SERVICE_TIMEOUT_MS: 700
+      APP_SECURITY_JWT_SECRET: dev-only-change-this-jwt-secret-to-a-long-random-value-32chars
+      APP_SECURITY_ADMIN_PASSWORD: admin-change-me
+      APP_SECURITY_ANALYST_PASSWORD: analyst-change-me
 
   ml-service:
     build:

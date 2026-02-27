@@ -51,6 +51,21 @@ app:
   kafka:
     transactions-topic: ${KAFKA_TOPIC_TRANSACTIONS:transactions}
     consumer-group: ${KAFKA_CONSUMER_GROUP:transaction-service-group}
+  security:
+    jwt:
+      secret: ${APP_SECURITY_JWT_SECRET:dev-only-change-this-jwt-secret-to-a-long-random-value-32chars}
+      issuer: ${APP_SECURITY_JWT_ISSUER:transaction-service}
+      ttl-minutes: ${APP_SECURITY_JWT_TTL_MINUTES:60}
+    users:
+      - username: ${APP_SECURITY_ADMIN_USERNAME:admin}
+        password: ${APP_SECURITY_ADMIN_PASSWORD:admin-change-me}
+        roles:
+          - ADMIN
+          - ANALYST
+      - username: ${APP_SECURITY_ANALYST_USERNAME:analyst}
+        password: ${APP_SECURITY_ANALYST_PASSWORD:analyst-change-me}
+        roles:
+          - ANALYST
 
 management:
   endpoints:

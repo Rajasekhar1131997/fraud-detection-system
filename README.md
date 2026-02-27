@@ -21,6 +21,16 @@ Production-style monorepo for a real-time, event-driven fraud detection platform
 - Grafana provisioning and starter dashboard
 - k6 load test script at `load-tests/transactions-load-test.js`
 
+## Week 5 In Progress
+
+- JWT auth endpoint in `fraud-service`: `POST /api/v1/auth/token`
+- JWT auth endpoint in `transaction-service`: `POST /api/v1/auth/token`
+- Role-based protection on dashboard APIs (`ADMIN` / `ANALYST`)
+- Role-based protection on transaction ingestion APIs (`ADMIN` / `ANALYST`)
+- In-memory rate limiting for dashboard endpoints
+- Kubernetes baseline manifests under `k8s/`
+- Production CI/CD workflow under `.github/workflows/week5-production-cicd.yml`
+
 ## Quick Start
 
 ```bash
@@ -39,7 +49,12 @@ docker-compose up -d --build
 ## Create a Transaction
 
 ```bash
+TX_TOKEN=$(curl -s -X POST "http://localhost:8080/api/v1/auth/token" \
+  -H "Content-Type: application/json" \
+  -d '{"username":"analyst","password":"analyst-change-me"}' | jq -r '.accessToken')
+
 curl -X POST http://localhost:8080/api/v1/transactions \
+  -H "Authorization: Bearer $TX_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "transactionId":"txn-001",
@@ -55,6 +70,11 @@ curl -X POST http://localhost:8080/api/v1/transactions \
 PowerShell alternative:
 
 ```powershell
+$tokenResponse = Invoke-RestMethod -Uri "http://localhost:8080/api/v1/auth/token" -Method Post -ContentType "application/json" -Body (@{
+  username = "analyst"
+  password = "analyst-change-me"
+} | ConvertTo-Json)
+
 $body = @{
   transactionId = "txn-001"
   userId        = "user-001"
@@ -64,14 +84,20 @@ $body = @{
   location      = "New York, US"
   deviceId      = "device-001"
 } | ConvertTo-Json
-Invoke-RestMethod -Uri "http://localhost:8080/api/v1/transactions" -Method Post -ContentType "application/json" -Body $body
+Invoke-RestMethod -Uri "http://localhost:8080/api/v1/transactions" -Method Post -Headers @{"Authorization" = "Bearer $($tokenResponse.accessToken)"} -ContentType "application/json" -Body $body
 ```
 
 ## Dashboard API Examples
 
 ```bash
-curl "http://localhost:8081/api/v1/dashboard/decisions?page=0&size=20&decision=BLOCKED"
-curl "http://localhost:8081/api/v1/dashboard/metrics"
+TOKEN=$(curl -s -X POST "http://localhost:8081/api/v1/auth/token" \
+  -H "Content-Type: application/json" \
+  -d '{"username":"analyst","password":"analyst-change-me"}' | jq -r '.accessToken')
+
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8081/api/v1/dashboard/decisions?page=0&size=20&decision=BLOCKED"
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8081/api/v1/dashboard/metrics"
 ```
 
 ## Load Testing (k6)
